@@ -1,0 +1,117 @@
+<html>
+	<head>
+		<title> IMCM Project </title>
+		<link rel="stylesheet" type="text/css" href="css/style.css">
+		<link href="/jquery-ui.css" rel="stylesheet">
+	</head>
+	<body>
+		<div id="header">
+		<div>
+			<a href="index.html"><img src="images/logo.png" alt="Logo"></a>
+		</div>
+	</div>
+	<div id="body">
+		<div id="sidebar">
+			<ul>
+				<li class="current">
+					<a class="home" href="index.html">Home</a>
+				</li>
+				<li>
+					<a class="about" href="about.html">About</a>
+				</li>
+				<li>
+					<a class="blog" href="blog.html">Blog</a>
+				</li>
+				<li>
+					<a class="gallery" href="gallery.html">Gallery</a>
+				</li>
+			</ul>
+			<div id="startSession">
+				<h3>Start Session</h3>
+				<br>
+				<table class='center'>
+					<tr><td>Name:</td><td><input type="text" id="sessionName" value="Enter Session Name"></td></tr>
+					<tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+					<tr><td>Date:</td><td><input type="text" id="datepicker"></td></tr>
+					<tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+					<tr><td>&nbsp;</td><td>&nbsp;&nbsp;&nbsp;&nbsp;<input type="button" value="Start Session" onclick="startSession()" ></td></tr>
+				</table>
+			</div>
+			<div>
+				<form method='post' action='/teacher' enctype='multipart/form-data'>	
+					<h3>Upload your MusicXML file</h3>
+					<div>
+						<input type="file" id="musicFile" size="40" name="testFile">
+					</div>
+					<input type="submit" id="go" value="Upload">
+				</form>
+			</div>
+			<div>
+				<h3>Contact Us</h3>
+				<a href="http://www.freewebsitetemplates.com/misc/contact" target="_blank" id="info">ibes@unimelb.edu.au</a>
+				<a href="http://www.freewebsitetemplates.com/misc/contact" target="_blank" id="phone">+61 3 8344 6713</a>
+			</div>
+		</div>
+		<div class="home">
+			<div class="section">
+				<div>
+					<bold>
+						Music Sheets available :
+					</bold>
+					<ul id = "Music Files">
+					</ul>
+				</div>
+			</div>
+		</div>
+	</body>
+	<script src="/socket.io/socket.io.js"></script>
+	<script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+	<script src="/external/jquery/jquery.js"></script>
+    <script src="/jquery-ui.js"></script>
+	<script>
+		//sessionStorage.designation = "teacher";
+		console.log("designation is "+ sessionStorage.designation + "\n");
+		var socket = io();
+		var session;
+
+		$(function() {
+    		$( "#datepicker" ).datepicker();
+  		});
+
+		if(sessionStorage.sessionName) {
+			var parent = document.getElementById("sidebar");
+			var child = document.getElementById("startSession");
+			parent.removeChild(child);
+		}
+
+		function startSession() {
+			console.log(document.getElementById("sessionName").value);
+			session = document.getElementById("sessionName").value;
+			session += " " + document.getElementById("datepicker").value;
+			var JSONObj = {"type" : "Session", "name" : session};
+			sessionStorage.sessionName = session;
+			console.log("Session Started is " + sessionStorage.sessionName);
+			socket.emit('Session', JSONObj);
+			var parent = document.getElementById("sidebar");
+			var child = document.getElementById("startSession");
+			parent.removeChild(child);
+		}
+		
+		socket.emit('Get File List', null);
+		socket.on('Music List', function(JSONObj){
+			var anchorTag = document.createElement('a');
+			var text = document.createTextNode(JSONObj.name);
+			var breakTag = document.createElement('BR');
+			anchorTag.setAttribute('style', "color:grey");
+    		anchorTag.setAttribute('href', "/file/?filename="+JSONObj.name);
+    		anchorTag.addEventListener("click", function(event) {
+    			sessionStorage.fileName = JSONObj.name;
+    			console.log("fileName added\n");
+    		});
+    		anchorTag.appendChild(text);
+			document.getElementById("Music Files").appendChild(anchorTag);
+			document.getElementById("Music Files").appendChild(breakTag);	
+			
+ 		});
+	</script>	
+</html>	

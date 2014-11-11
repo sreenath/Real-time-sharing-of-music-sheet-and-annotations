@@ -1,0 +1,349 @@
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="/css/style.css">
+    <link href="/test.css" type="text/css" rel="stylesheet" />
+    <link href="/jquery-ui.css" rel="stylesheet">
+  </head>
+  <body>
+    <div id="container"> 
+      <div id="col1"> 
+        <div id="sessionInfo" style="color:#FBFBEF"></div>
+        <h3>
+        <div id="toolBox">
+          <h2>Tools</h2>
+          <ul id="toolSet"> 
+            <a href="#" title="Rectangle Area Selector Tool"><input id="rectImage" type="image" src="/rect.png" name="rect" width="30" height="30" onclick="rectangleAnnotator()"></a><br><br>
+            <a href="#" title="Text Annotation Tool"><input id="textImage" type="image" src="/text.png" name="text" width="30" height="30" onclick="textAnnotator()"></a><br><br>
+            <a href="#" title="Highlighter Tool"><input id="highlightImage" type="image" src="/highlight.png" name="highlight" width="30" height="30" onclick="highlightAnnotator()"></a><br><br>
+          </ul>
+        </div>
+      </h3>
+        <!--<div id = "download">
+          <form method='post' action='/download/' enctype='multipart/form-data'>
+            <input type="submit" id="go" value="Download MusicXML">
+          </form>
+        </div>-->
+        <h3 style="color:#FBFBEF">Previous Session Annotations
+        <div id = "accordion" style="left:0px; top:20px">
+        </div>
+        </h3>
+      </div>
+      <div id="container2" style="background-color:ffffff">
+        <div id="canvasesdiv" style="position:relative; ">
+          <div id = "testdiv" style="z-index: 1; position:absolute; left:0px; top:0px" width="2000" height="2000">
+          </div>
+          <canvas id="myCanvas" style="z-index: 2; position:absolute; left:0px; top:0px" width="2000" height="2000"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+    <script>
+      var x, y, width, height, textAnnotatorCount = 0;
+      var highlightOn = 0, textOn = 0, rectOn = 0;
+      var text = [];
+      var socket = io();
+      var canvas = document.getElementById('myCanvas');
+      var context = canvas.getContext('2d');
+  
+      function getMousePos(canvas, evt) {
+        var rect = canvas.getBoundingClientRect();
+        return {
+          x: evt.clientX - rect.left,
+          y: evt.clientY - rect.top
+        };
+      }
+
+      function sketchRect() {
+        context = canvas.getContext('2d');
+        context.lineWidth = 2;
+        context.strokeStyle = 'rgba(255, 0, 0, 0.9)';
+        context.beginPath();
+        context.rect(x, y, width, height);
+        context.stroke();
+      }
+
+      function highlight(canvas, xpart) {
+        context = canvas.getContext('2d');
+        context.beginPath();
+        context.moveTo(x, y);   
+        context.lineTo(xpart, y);
+        context.strokeStyle = 'rgba(0, 100, 0, 0.5)';
+        context.lineWidth = 25;
+        context.stroke();
+        x = xpart;
+      }
+
+      function sketchText(canvas, xpart, ypart, text) {
+        context = canvas.getContext('2d');
+        context.font = '10pt Calibri';
+        context.fillStyle = 'blue';
+        context.fillText(text.join(""), xpart, ypart);
+      }
+        
+      function highlightAnnotator() {
+        textOn = 0;
+        highlightOn = 1;
+        rectOn = 0;
+        canvas.addEventListener('mousedown', highlight_mouse_down, false);
+      }
+
+      var highlight_mouse_down = function(evt) {
+        var mousePos = getMousePos(canvas, evt);
+        x = mousePos.x;
+        y = mousePos.y;
+        canvas.addEventListener('mouseup', highlight_mouse_up, false);
+      }
+      
+      var highlight_mouse_up = function(evt) {
+        if(highlightOn == 1) {
+          var mousePos = getMousePos(canvas, evt);
+          if(sessionStorage.sessionName) {
+            var JSONObj = {"type" : "Highlight", "initX" : x, "initY" : y, "finalX" : mousePos.x, "author" : sessionStorage.designation, "session" : sessionStorage.sessionName};
+          } else {
+            sessionStorage.designation = "teacher";
+            console.log("Designation is "+ sessionStorage.designation);
+            var JSONObj = {"type" : "Highlight", "initX" : x, "initY" : y, "finalX" : mousePos.x, "author" : sessionStorage.designation, "session" : sessionStorage.designation};
+          }
+          socket.emit('Highlight', JSONObj);
+          highlight(canvas, mousePos.x);
+        } 
+      }
+      
+      function textAnnotator() {
+        textOn = 1;
+        highlightOn = 0;
+        rectOn = 0;
+        canvas.addEventListener('click', function(evt) {
+          var mousePos = getMousePos(canvas, evt);
+          x = mousePos.x;
+          y = mousePos.y;
+        }, false);
+
+        if(textAnnotatorCount == 0) {
+          window.addEventListener("keypress", checkKeyPressed, false);
+          textAnnotatorCount += 1;
+        }
+ 
+        function checkKeyPressed(e) {
+          if(textOn == 1) {
+            e.preventDefault();
+            if(e.charCode == "13") {
+              if(sessionStorage.sessionName) {
+                var JSONObj = {"type" : "Text", "initX" : x, "initY" : y, "content" : text, "author" : sessionStorage.designation, "session" : sessionStorage.sessionName};
+              } else {
+                sessionStorage.designation = "teacher";
+                console.log("Designation is "+ sessionStorage.designation);
+                var JSONObj = {"type" : "Text", "initX" : x, "initY" : y, "content" : text, "author" : sessionStorage.designation, "session" : sessionStorage.designation};
+              }
+              console.log("Text is "+ text);
+              socket.emit('Text', JSONObj);
+              sketchText(canvas, x, y, text);
+              text = [];
+              y = y + 12;
+              window.addEventListener("keypress", checkKeyPressed, false);
+            } else {
+              text.push(String.fromCharCode(e.charCode));
+            }
+          } 
+        }   
+      }  
+    
+      function rectangleAnnotator() {
+        textOn = 0;
+        highlightOn = 0;
+        rectOn = 1;
+        canvas.addEventListener('mousedown', rectangle_mouse_down, false);  
+      }
+
+      var rectangle_mouse_down = function(evt) {
+        var mousePos = getMousePos(canvas, evt);
+        x = mousePos.x;
+        y = mousePos.y;
+        canvas.addEventListener('mouseup', rectangle_mouse_up, false);
+      }
+
+      var rectangle_mouse_up = function(evt) {
+        if(rectOn == 1) {
+          var mousePos = getMousePos(canvas, evt);
+          width = mousePos.x - x;
+          height = mousePos.y - y;
+          sketchRect();
+          if(sessionStorage.sessionName) {
+            var JSONObj = {"type" : "Rect", "initX" : x, "initY" : y, "width" : width, "height" : height, "author" : sessionStorage.designation, "session" : sessionStorage.sessionName};
+          } else {
+            sessionStorage.designation = "teacher";
+            console.log("Designation is "+ sessionStorage.designation);
+            var JSONObj = {"type" : "Rect", "initX" : x, "initY" : y, "width" : width, "height" : height, "author" : sessionStorage.designation, "session" : sessionStorage.designation};
+          }
+          socket.emit('Rectangle', JSONObj);
+        }
+      }
+    
+    </script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+    <script src="abcjs_basic_1.4-min.js" type="text/javascript"></script>
+    <script type="text/javascript">
+      
+      var socket = io();
+      if (sessionStorage.sessionName) {
+        var tempJSON = {"session" : sessionStorage.sessionName};
+        var headerTag = document.createElement('H3');
+        var textTag = document.createTextNode("Current Session : " + sessionStorage.sessionName);
+        headerTag.appendChild(textTag);
+        document.getElementById("sessionInfo").appendChild(headerTag);
+      } else {
+        var tempJSON = {"file" : sessionStorage.fileName};
+      }
+      socket.emit('Get ABC', tempJSON);
+      var testString;
+ 
+    </script>
+    <script src="/external/jquery/jquery.js"></script>
+    <script src="/jquery-ui.js"></script>
+    <script>
+      
+      $( "#toolBox" ).accordion();
+      $( "#toolSet" ).tooltip();
+      var sessionList = [];
+      socket.on('ABC', function(JSONObj){
+        $( "#accordion" ).accordion();
+        $('#accordion').accordion('destroy');
+        $("#accordion").empty();
+        var tempJSON = {"designation" : "teacher"};
+        socket.emit('Get Session List', tempJSON);
+        testString = JSONObj.value;
+        sessionStorage.fileName = JSONObj.name;
+        console.log("Current File is " + sessionStorage.fileName);
+        console.log(testString);
+        sessionList.splice(0, sessionList.length);
+        ABCJS.renderAbc("testdiv", testString);
+      });
+
+  
+      var flag;
+      socket.on('Annotation', function(JSONObj) {
+        if (JSONObj == null) {
+          console.log("Null object received");
+          $( "#accordion" ).accordion({heightStyle: 'content'});
+        } else {
+          flag = false;
+          for(var j = 0; j < sessionList.length; j++) {
+            if(JSONObj.session == sessionList[j]) {
+              flag = true;
+              break;
+            }
+          }
+
+          if(flag != true) {
+            console.log("Entered check session already exist\n");
+            sessionList.push(JSONObj.session);
+            var headerTag = document.createElement('H4');
+            var textTag = document.createTextNode(JSONObj.session);
+            headerTag.appendChild(textTag);
+            var divTag = document.createElement('div');
+            divTag.id = JSONObj.session;
+            document.getElementById("accordion").appendChild(headerTag);
+            document.getElementById("accordion").appendChild(divTag);
+          }
+    
+          var inputTag = document.createElement('INPUT');
+          var breakTag = document.createElement("br");
+          inputTag.type = 'checkbox';
+          console.log(JSONObj);
+          inputTag.name = JSONObj.type;
+          inputTag.value = JSONObj.type;
+      
+          inputTag.addEventListener("click", function(event) {
+            showAnnotation(JSONObj);
+          });
+        
+          document.getElementById(JSONObj.session).appendChild(inputTag);
+  
+          var textTag = document.createTextNode(JSONObj.type);
+          document.getElementById(JSONObj.session).appendChild(textTag);
+          document.getElementById(JSONObj.session).appendChild(breakTag);
+        }
+      });
+
+      function showAnnotation(JSONObj) {
+        console.log("Inside showAnnotation" + JSONObj.session);
+        if(sessionStorage.sessionName) {
+          // Annotations should be displayed on all peers in session
+          socket.emit('Get Annotation', JSONObj);
+        } else {
+          // Display annotations in current webpage only
+          if(JSONObj.type == "Rect") {
+            setRectangle(JSONObj);
+          } else if(JSONObj.type == "Highlight"){
+            setHighlight(JSONObj);
+          } else {
+            setText(JSONObj);
+          }
+        }
+      }
+
+      socket.on('Rectangle', function(JSONObj){
+        console.log(JSONObj);
+        x = JSONObj.initX;
+        y = JSONObj.initY;
+        width = JSONObj.width;
+        height = JSONObj.height;
+        context = canvas.getContext('2d');
+        sketchRect();
+      });
+
+      socket.on('Highlight', function(JSONObj){
+        console.log(JSONObj);
+        x = JSONObj.initX;
+        y = JSONObj.initY;
+        var finalX = JSONObj.finalX;
+        context = canvas.getContext('2d');
+        highlight(canvas, finalX);
+      });
+
+      socket.on('Text', function(JSONObj){
+        console.log(JSONObj);
+        x = JSONObj.initX;
+        y = JSONObj.initY;
+        var text = JSONObj.content;
+        context = canvas.getContext('2d');
+        sketchText(canvas, x, y, text);
+      });
+
+      function setRectangle(JSONObj) {
+        x = JSONObj.initX;
+        y = JSONObj.initY;
+        width = JSONObj.width;
+        height = JSONObj.height;
+        sketchRect();
+      }
+
+      function setHighlight(JSONObj) {
+        x = JSONObj.initX;
+        y = JSONObj.initY;
+        var tempX = JSONObj.finalX;
+        highlight(canvas,tempX);
+      }
+
+      function setText(JSONObj) {
+        x = JSONObj.initX;
+        y = JSONObj.initY;
+        var text = JSONObj.content;
+        sketchText(canvas, x, y, text);
+      }
+
+      var width = canvasesdiv.offsetWidth;
+      var height = canvasesdiv.offsetHeight;
+      var newWidth = width + 30;
+
+      document.getElementById('canvasesdiv').offsetWidth = width + 'px';
+      document.getElementById('canvasesdiv').offsetHeight = height + 'px';
+      document.getElementById('myCanvas').offsetWidth = width + 'px';
+      document.getElementById('myCanvas').offsetHeight = height + 'px';
+      document.getElementById('accordion').style.left = newWidth + 'px';
+    </script>
+  </body>
+</html>

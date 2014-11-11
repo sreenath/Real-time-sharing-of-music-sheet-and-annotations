@@ -1,0 +1,89 @@
+<html>
+	<head>
+		<title> IMCM Project </title>
+		<link rel="stylesheet" type="text/css" href="css/style.css">
+	</head>
+	<body>
+		<script>
+			function setUser() {
+				console.log("Designation is "+ $("#test1").value() + "\n");
+				sessionStorage.designation = $("#test1").value();
+			}
+		</script>
+		<div id="header">
+		<div>
+			<a href="index.html"><img src="images/logo.png" alt="Logo"></a>
+		</div>
+	</div>
+	<div id="body">
+		<div id="sidebar">
+			<ul>
+				<li class="current">
+					<a class="home" href="index.html">Home</a>
+				</li>
+				<li>
+					<a class="about" href="about.html">About</a>
+				</li>
+				<li>
+					<a class="blog" href="blog.html">Blog</a>
+				</li>
+				<li>
+					<a class="gallery" href="gallery.html">Gallery</a>
+				</li>
+			</ul>
+			<div id="startSession">
+			</div>
+			<!--<div>
+				<form method='post' action='/file-upload' enctype='multipart/form-data'>	
+					<h3>Upload your MusicXML file</h3>
+					<div>
+						<input type="file" id="musicFile" size="40" name="testFile">
+					</div>
+					<input type="submit" id="go" value="Upload">
+				</form>
+			</div>-->
+			<div>
+				<h3>Contact Us</h3>
+				<a href="http://www.freewebsitetemplates.com/misc/contact" target="_blank" id="info">ibes@unimelb.edu.au</a>
+				<a href="http://www.freewebsitetemplates.com/misc/contact" target="_blank" id="phone">+61 3 8344 6713</a>
+			</div>
+		</div>
+		<div class="home">
+			<div style="text-align: center;">
+				<div style="box-sizing: border-box; display: inline-block; width: auto; max-width: 480px; background-color: #FFFFFF; border: 2px solid #0361A8; border-radius: 5px; box-shadow: 0px 0px 8px #0361A8; margin: 50px auto auto;">
+					<div style="background: #0361A8; border-radius: 5px 5px 0px 0px; padding: 15px;"><span style="font-family: verdana,arial; color: #D4D4D4; font-size: 1.00em; font-weight:bold;">Enter your login and password</span></div>
+					<div style="background: ; padding: 15px">
+	
+					<style type="text/css" scoped>
+						td { text-align:left; font-family: verdana,arial; color: #064073; font-size: 1.00em; }
+						input { border: 1px solid #CCCCCC; border-radius: 5px; color: #666666; display: inline-block; font-size: 1.00em;  padding: 5px; width: 100%; }
+						input[type="button"], input[type="reset"], input[type="submit"] { height: auto; width: auto; cursor: pointer; box-shadow: 0px 0px 5px #0361A8; float: right; text-align:right; margin-top: 10px; margin-left:7px;}
+						table.center { margin-left:auto; margin-right:auto; }
+						.error { font-family: verdana,arial; color: #D41313; font-size: 1.00em; }
+					</style>
+					<form method="post" action="/" name="aform" onsubmit="return setUser();" >
+						<table class='center'>
+							<tr><td>Username:</td><td><input id="test1" type="text" name="login"></td></tr>
+							<tr><td>Password:</td><td><input type="password" name="password"></td></tr>
+							<tr><td>&nbsp;</td><td><input type="submit" value="Submit" ></td></tr>
+							<tr><td colspan=2>&nbsp;</td></tr>
+							<tr><td colspan=2>Lost your username or password? Find it <a href="https://www.authpro.com/auth/deluxe/?action=lost">here</a>!</td></tr>
+							<tr><td colspan=2>Not member yet? Click <a href="netfilmes.bl.ee/registro">here</a> to register.</td></tr>
+						</table>
+					</form>
+				</div>
+			</div>
+		</div>
+	</body>
+	<script>
+
+		function startSession() {
+			console.log(document.getElementById("sessionName").value);
+		}
+		
+		function uploadFile() {
+			app.use(express.bodyParser());
+		}
+		
+	</script>	
+</html>	

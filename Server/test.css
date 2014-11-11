@@ -1,0 +1,48 @@
+html, body {  
+margin:0;  
+padding:0;  
+border:none;  
+}
+ 
+#container { 
+width: 100%;  
+margin: 0 auto;  
+padding: 0; 
+} 
+
+#container h1 {  
+border: thin solid green; 
+/* remove this line to remove the border */ 
+} 
+
+#container h2 {  
+/*border: thin solid blue; */
+/* remove this line to remove the border */ 
+} 
+
+#col1 {  
+width: 20%;  
+float: left; 
+margin: 10px;
+/* switch this to right and container2 to left to change the column locations */ 
+border: thin solid black; 
+/* remove this line to remove the border */ 
+}
+
+#container2 { 
+width: 78%;  
+float: right; 
+/* switch this to left and col1 to right to change the column locations */ 
+} 
+
+#canvasesdiv {  
+float: left; 
+/* switch this to right and container2 to left to change the column locations */ 
+/*border: thin solid black; */
+/* remove this line to remove the border */ 
+}
+
+#display {
+float: right;
+border: thin solid red;
+}
